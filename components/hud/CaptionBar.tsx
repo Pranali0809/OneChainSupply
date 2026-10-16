@@ -9,7 +9,7 @@ export default function CaptionBar() {
   if (!presenter) return null;
   const beat = BEATS[beatIndex];
   return (
-    <div className="absolute left-0 right-0 bottom-24 z-20 flex justify-center pointer-events-none">
+    <div className="absolute left-0 right-0 top-[68px] z-20 flex justify-center pointer-events-none">
       <AnimatePresence mode="wait">
         <motion.div
           key={beat.id}

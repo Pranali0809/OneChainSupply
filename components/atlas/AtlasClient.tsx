@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { CAPABILITIES, PILLARS, ARCH_LAYERS, Capability, AtlasStatus } from "@/data/atlas";
+import { CAPABILITIES, PILLARS, ARCH_LAYERS, Capability, AtlasStatus, effectiveStatus, liveCount, SCREEN_DEFAULT_ID } from "@/data/atlas";
+import { useStore } from "@/lib/store";
 import { Chip } from "@/components/primitives";
 import MicroViz from "./MicroViz";
 
@@ -15,7 +17,7 @@ const statusTone: Record<AtlasStatus, "low" | "accent" | "med"> = {
 export default function AtlasClient() {
   const [sel, setSel] = useState<Capability | null>(null);
   const [hover, setHover] = useState<string | null>(null);
-  const liveCount = CAPABILITIES.filter((c) => c.status === "Live in demo").length;
+  const live = liveCount();
 
   return (
     <div className="h-screen w-full bg-void text-text-hi overflow-y-auto">
@@ -30,7 +32,7 @@ export default function AtlasClient() {
         </Link>
         <span className="label !text-text-low">/ Capability Atlas</span>
         <div className="flex-1" />
-        <span className="label">{CAPABILITIES.length} capabilities · {liveCount} live in demo · 5 pillars</span>
+        <span className="label">{CAPABILITIES.length} capabilities · {live} live · 5 pillars</span>
       </div>
 
       <div className="max-w-[1280px] mx-auto px-6 py-8">
@@ -67,7 +69,7 @@ export default function AtlasClient() {
                   </div>
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-[13px] font-semibold leading-tight">{c.name}</h3>
-                    <Chip tone={statusTone[c.status]}>{c.status === "Live in demo" ? "Live" : c.status}</Chip>
+                    <Chip tone={statusTone[effectiveStatus(c)]}>{effectiveStatus(c) === "Live in demo" ? "Live" : effectiveStatus(c)}</Chip>
                   </div>
                   <p className="text-[12px] text-text-mid mt-1 leading-snug">{c.outcome}</p>
                 </motion.button>
@@ -92,6 +94,13 @@ export default function AtlasClient() {
 }
 
 function DetailSheet({ cap, onClose }: { cap: Capability; onClose: () => void }) {
+  const router = useRouter();
+  const openScreen = useStore((s) => s.openScreen);
+  const launch = () => {
+    if (!cap.screen) return;
+    openScreen(cap.screen, SCREEN_DEFAULT_ID[cap.screen]);
+    router.push("/");
+  };
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 grid place-items-center p-6" style={{ background: "rgba(6,7,10,0.6)", backdropFilter: "blur(3px)" }} onClick={onClose}>
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} className="glass p-5 w-[560px] max-w-full" onClick={(e) => e.stopPropagation()}>
@@ -99,7 +108,7 @@ function DetailSheet({ cap, onClose }: { cap: Capability; onClose: () => void })
           <div>
             <div className="flex items-center gap-2">
               <Chip tone="accent">{cap.pillar}</Chip>
-              <Chip tone={statusTone[cap.status]}>{cap.status}</Chip>
+              <Chip tone={statusTone[effectiveStatus(cap)]}>{effectiveStatus(cap)}</Chip>
             </div>
             <h2 className="text-[18px] font-semibold mt-1.5 leading-tight">{cap.name}</h2>
           </div>
@@ -123,6 +132,15 @@ function DetailSheet({ cap, onClose }: { cap: Capability; onClose: () => void })
           <div className="label mb-1">Decision produced</div>
           <div className="text-[13px] text-text-hi">{cap.decision}</div>
         </div>
+        {cap.screen && (
+          <button
+            onClick={launch}
+            className="mt-4 w-full py-2.5 rounded-lg text-[13px] font-semibold"
+            style={{ background: "rgba(77,225,193,0.14)", color: "var(--accent)", boxShadow: "inset 0 0 0 1px rgba(77,225,193,0.4)" }}
+          >
+            Open screen ↗
+          </button>
+        )}
       </motion.div>
     </motion.div>
   );

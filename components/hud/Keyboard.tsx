@@ -41,11 +41,16 @@ export default function Keyboard() {
         case "Escape":
           if (s.commandBarOpen) s.setCommandBar(false);
           else if (s.helpOpen) s.setHelp(false);
+          else if (s.activeScreen) s.closeScreen();
           else if (s.nlqOpen) s.setNlq(false);
           else if (s.loopOpen) s.setLoop(false);
           else if (s.scenarioRailOpen) s.setScenarioRail(false);
           else if (s.presenterMode) s.exitPresenter();
           else if (s.selectedNodeId || s.selectedLaneId || s.selectedBatchId) s.closeInspector();
+          break;
+        case "r":
+        case "R":
+          s.resetAll();
           break;
         case "o":
         case "O":

@@ -16,6 +16,7 @@ import LoopView from "./acts/LoopView";
 import GhostPanels from "./acts/GhostPanels";
 import CloseOverlay from "./acts/CloseOverlay";
 import PresenterControls from "./acts/PresenterControls";
+import ScreenHost from "./screens/ScreenHost";
 
 const TwinCanvas = dynamic(() => import("./twin/TwinCanvas"), {
   ssr: false,
@@ -37,6 +38,7 @@ export default function Shell() {
         }}
       />
       <TwinCanvas />
+      <ScreenHost />
       <TopBar />
       <LayerRail />
       <Legend />

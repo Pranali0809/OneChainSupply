@@ -96,6 +96,45 @@ body {
   animation: breathe 3.3s ease-in-out infinite;
 }
 
+@keyframes flowLR {
+  from {
+    left: -4%;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  to {
+    left: 104%;
+    opacity: 0;
+  }
+}
+
+.conv-tile {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  animation-name: flowLR;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes machinePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 59, 107, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(255, 59, 107, 0);
+  }
+}
+.machine-degraded {
+  animation: machinePulse 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;

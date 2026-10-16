@@ -40,6 +40,7 @@ export default function Inspector() {
           className="absolute right-4 top-[72px] bottom-4 z-20 w-[420px] glass flex flex-col overflow-hidden"
         >
           <Header node={node} lane={lane} onClose={close} />
+          {node && <ScreenCtas node={node} />}
           <div className="flex gap-1 px-3 pt-2 border-b border-stroke-faint">
             {TABS.map((t) => (
               <button
@@ -90,6 +91,33 @@ function Header({ node, lane, onClose }: { node: TwinNode | null; lane: Lane | n
       <button onClick={onClose} className="text-text-low hover:text-text-hi text-[18px] leading-none px-1">
         ×
       </button>
+    </div>
+  );
+}
+
+// Deep-dive entry points — shown when relevant to the selected object.
+function ScreenCtas({ node }: { node: TwinNode }) {
+  const openScreen = useStore((s) => s.openScreen);
+  const ctas: { label: string; run: () => void }[] = [];
+  if (node.kind === "PLANT") ctas.push({ label: "Open plant", run: () => openScreen("plant", node.id) });
+  if (node.kind === "DC") ctas.push({ label: "Build truck", run: () => openScreen("dock", node.id) });
+  ctas.push({ label: "Open plan room", run: () => openScreen("plan") });
+  return (
+    <div className="px-3.5 pb-2 flex flex-wrap gap-1.5">
+      {ctas.map((c, i) => (
+        <button
+          key={c.label}
+          onClick={c.run}
+          className="px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
+          style={
+            i === 0
+              ? { background: "rgba(77,225,193,0.14)", color: "var(--accent)", boxShadow: "inset 0 0 0 1px rgba(77,225,193,0.4)" }
+              : { background: "rgba(255,255,255,0.04)", color: "var(--text-mid)", border: "1px solid var(--stroke-faint)" }
+          }
+        >
+          {c.label} ↗
+        </button>
+      ))}
     </div>
   );
 }
@@ -220,6 +248,8 @@ function RiskRow({ r }: { r: RiskScore }) {
 }
 
 function DecisionsTab({ objectId }: { objectId: string }) {
+  // re-read when a screen commit appends to the ledger
+  useStore((s) => s.twinRevision);
   const entries = ledgerForObject(objectId);
   const statusTone: Record<string, "low" | "med" | "high" | "accent" | "neutral"> = {
     executed: "low",
@@ -268,11 +298,17 @@ function LaneBody({ lane, tab }: { lane: Lane; tab: string }) {
   const to = NODE_BY_ID[lane.to];
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2 text-[13px]">
+      <div className="flex items-center gap-2 text-[13px] flex-wrap">
         <span className="text-text-hi font-medium">{from?.name}</span>
         <span className="text-text-low">→</span>
         <span className="text-text-hi font-medium">{to?.name}</span>
+        {lane.crossBorder && <Chip tone="med">cross-border · customs</Chip>}
       </div>
+      {lane.crossBorder && (
+        <div className="text-[11px] text-text-mid -mt-1">
+          +2 transit days customs dwell · reliability and lane risk carry a customs-delay driver.
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <Stat label="Mode">{lane.mode}</Stat>
         <Stat label="Transit">{lane.transitDays}d</Stat>

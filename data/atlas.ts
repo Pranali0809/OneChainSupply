@@ -7,6 +7,8 @@ export type ModelFamily =
   | "Prescriptive optimization"
   | "Generative explanation";
 
+export type ScreenKind = "plant" | "dock" | "plan";
+
 export interface Capability {
   id: string;
   pillar: Pillar;
@@ -17,14 +19,15 @@ export interface Capability {
   inputs: string[]; // twin objects consumed
   decision: string; // decision produced
   micro: "forecast" | "flow" | "risk" | "sankey" | "route" | "line" | "stack" | "pulse";
+  screen?: ScreenKind; // capabilities that open a deep-dive screen
 }
 
 export const CAPABILITIES: Capability[] = [
   // ── Plan ──
   { id: "cap-demand", pillar: "Plan", name: "Hierarchical probabilistic demand forecasting", outcome: "p10/p50/p90 demand at every material-node-week.", status: "Live in demo", family: "Probabilistic forecasting", inputs: ["Material", "Node", "Order history"], decision: "Base demand distribution feeding every downstream solve.", micro: "forecast" },
   { id: "cap-service", pillar: "Plan", name: "Service & cuts projection", outcome: "Forward fill-rate and projected cuts by customer.", status: "Live in demo", family: "Risk & classification", inputs: ["Forecast", "Inventory", "Lane"], decision: "Service risk score per node and customer.", micro: "risk" },
-  { id: "cap-safety", pillar: "Plan", name: "Inventory & safety-stock optimization", outcome: "Right-sized buffers against demand variance.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Forecast", "Node", "Service target"], decision: "Safety-stock targets by node-SKU.", micro: "stack" },
-  { id: "cap-sop", pillar: "Plan", name: "S&OP scenario balancing", outcome: "Supply/demand balanced across the quarter.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Forecast", "Capacity", "Inventory"], decision: "Balanced S&OP plan with declared priorities.", micro: "flow" },
+  { id: "cap-safety", pillar: "Plan", name: "Inventory & safety-stock optimization", outcome: "Right-sized buffers against demand variance.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Forecast", "Node", "Service target"], decision: "Safety-stock targets by node-SKU.", micro: "stack", screen: "plan" },
+  { id: "cap-sop", pillar: "Plan", name: "S&OP scenario balancing", outcome: "Supply/demand balanced across the quarter.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Forecast", "Capacity", "Inventory"], decision: "Balanced S&OP plan with declared priorities.", micro: "flow", screen: "plan" },
 
   // ── Source ──
   { id: "cap-rawmat", pillar: "Source", name: "Raw-material order optimization", outcome: "Order quantities timed to production need.", status: "Live in demo", family: "Prescriptive optimization", inputs: ["Supplier", "BOM", "Production plan"], decision: "Purchase order schedule by supplier.", micro: "route" },
@@ -33,22 +36,22 @@ export const CAPABILITIES: Capability[] = [
   { id: "cap-commodity", pillar: "Source", name: "Commodity signal monitoring", outcome: "Price-signal-aware buy timing.", status: "Designed", family: "Probabilistic forecasting", inputs: ["Commodity index", "BOM"], decision: "Buy/defer recommendation per commodity.", micro: "forecast" },
 
   // ── Make ──
-  { id: "cap-sequence", pillar: "Make", name: "Production sequencing & changeover minimization", outcome: "Fewer changeovers, more sellable hours.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Line", "Production plan", "SKU"], decision: "Optimal run sequence per line.", micro: "line" },
-  { id: "cap-oee", pillar: "Make", name: "Line-rate & OEE prediction", outcome: "Predicts lines running below committed rate.", status: "Modelled", family: "Risk & classification", inputs: ["Line", "Telemetry"], decision: "Line risk score and expected rate.", micro: "pulse" },
-  { id: "cap-pdm", pillar: "Make", name: "Predictive maintenance & remaining useful life", outcome: "Intervene before unplanned downtime.", status: "Designed", family: "Risk & classification", inputs: ["Asset twin", "Telemetry"], decision: "Maintenance window recommendation.", micro: "pulse" },
-  { id: "cap-vision", pillar: "Make", name: "Vision-based quality inspection", outcome: "Defects caught at the line, not the DC.", status: "Designed", family: "Risk & classification", inputs: ["Line camera", "Batch"], decision: "Accept/reject + defect class per unit.", micro: "risk" },
-  { id: "cap-yield", pillar: "Make", name: "Yield & energy optimization", outcome: "More output per unit input and kWh.", status: "Designed", family: "Prescriptive optimization", inputs: ["Line", "Telemetry", "Recipe"], decision: "Setpoint recommendations per line.", micro: "line" },
+  { id: "cap-sequence", pillar: "Make", name: "Production sequencing & changeover minimization", outcome: "Fewer changeovers, more sellable hours.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Line", "Production plan", "SKU"], decision: "Optimal run sequence per line.", micro: "line", screen: "plant" },
+  { id: "cap-oee", pillar: "Make", name: "Line-rate & OEE prediction", outcome: "Predicts lines running below committed rate.", status: "Modelled", family: "Risk & classification", inputs: ["Line", "Telemetry"], decision: "Line risk score and expected rate.", micro: "pulse", screen: "plant" },
+  { id: "cap-pdm", pillar: "Make", name: "Predictive maintenance & remaining useful life", outcome: "Intervene before unplanned downtime.", status: "Designed", family: "Risk & classification", inputs: ["Asset twin", "Telemetry"], decision: "Maintenance window recommendation.", micro: "pulse", screen: "plant" },
+  { id: "cap-vision", pillar: "Make", name: "Vision-based quality inspection", outcome: "Defects caught at the line, not the DC.", status: "Designed", family: "Risk & classification", inputs: ["Line camera", "Batch"], decision: "Accept/reject + defect class per unit.", micro: "risk", screen: "plant" },
+  { id: "cap-yield", pillar: "Make", name: "Yield & energy optimization", outcome: "More output per unit input and kWh.", status: "Designed", family: "Prescriptive optimization", inputs: ["Line", "Telemetry", "Recipe"], decision: "Setpoint recommendations per line.", micro: "line", screen: "plant" },
 
   // ── Deliver ──
   { id: "cap-deploy", pillar: "Deliver", name: "Deployment & push recommendations", outcome: "Cover placed where demand will land.", status: "Live in demo", family: "Prescriptive optimization", inputs: ["Forecast", "Inventory", "Lane"], decision: "Deployment push plan plant→DC.", micro: "flow" },
   { id: "cap-repo", pillar: "Deliver", name: "Repositioning", outcome: "At-risk stock moved before it ages out.", status: "Live in demo", family: "Prescriptive optimization", inputs: ["Batch", "Node", "Lane"], decision: "DC→DC repositioning moves.", micro: "route" },
-  { id: "cap-truck", pillar: "Deliver", name: "Truck build & load levelling", outcome: "Full trucks, fewer partials, level docks.", status: "Live in demo", family: "Prescriptive optimization", inputs: ["Order", "Pallet", "Lane"], decision: "Truck build + load plan.", micro: "stack" },
-  { id: "cap-network", pillar: "Deliver", name: "Network & lane design", outcome: "Structurally lower cost-to-serve.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Node", "Lane", "Demand"], decision: "Lane add/drop + flow-path design.", micro: "route" },
+  { id: "cap-truck", pillar: "Deliver", name: "Truck build & load levelling", outcome: "Full trucks, fewer partials, level docks.", status: "Live in demo", family: "Prescriptive optimization", inputs: ["Order", "Pallet", "Lane"], decision: "Truck build + load plan.", micro: "stack", screen: "dock" },
+  { id: "cap-network", pillar: "Deliver", name: "Network & lane design", outcome: "Structurally lower cost-to-serve.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Node", "Lane", "Demand"], decision: "Lane add/drop + flow-path design.", micro: "route", screen: "dock" },
   { id: "cap-cts", pillar: "Deliver", name: "Cost to serve", outcome: "True margin by customer, lane, and SKU.", status: "Modelled", family: "Causal attribution", inputs: ["Lane", "Order", "Cost"], decision: "Cost-to-serve decomposition.", micro: "sankey" },
   { id: "cap-dock", pillar: "Deliver", name: "Dock & door scheduling", outcome: "Smoothed arrivals, less detention.", status: "Designed", family: "Prescriptive optimization", inputs: ["Shipment", "Node", "Dock"], decision: "Appointment schedule per door.", micro: "line" },
 
   // ── Customer ──
-  { id: "cap-scenario", pillar: "Customer", name: "Customer scenario modelling", outcome: "Answer customer what-ifs in seconds.", status: "Live in demo", family: "Generative explanation", inputs: ["Customer", "Forecast", "Plan"], decision: "Scenario comparison with trade-offs.", micro: "forecast" },
+  { id: "cap-scenario", pillar: "Customer", name: "Customer scenario modelling", outcome: "Answer customer what-ifs in seconds.", status: "Live in demo", family: "Generative explanation", inputs: ["Customer", "Forecast", "Plan"], decision: "Scenario comparison with trade-offs.", micro: "forecast", screen: "plan" },
   { id: "cap-freshness", pillar: "Customer", name: "Customer-specific shelf-life logic", outcome: "Ship only inside each customer's freshness window.", status: "Live in demo", family: "Risk & classification", inputs: ["Batch", "Material", "Customer"], decision: "Ship/hold per customer freshness rule.", micro: "risk" },
   { id: "cap-fill", pillar: "Customer", name: "Fill-rate protection", outcome: "SLA breaches prevented, not explained after.", status: "Modelled", family: "Prescriptive optimization", inputs: ["Order", "Inventory", "Service target"], decision: "Protective allocation to at-risk orders.", micro: "flow" },
   { id: "cap-promo", pillar: "Customer", name: "Promotion readiness", outcome: "Enough cover, fresh enough, for every promo.", status: "Modelled", family: "Probabilistic forecasting", inputs: ["Promo calendar", "Forecast", "Inventory"], decision: "Promo build + placement plan.", micro: "stack" },
@@ -62,6 +65,22 @@ export const CAPABILITIES: Capability[] = [
 ];
 
 export const PILLARS: Pillar[] = ["Plan", "Source", "Make", "Deliver", "Customer", "End to end"];
+
+// A capability with a screen is Live in demo (the screen flips Modelled → Live).
+export function effectiveStatus(c: Capability): AtlasStatus {
+  return c.screen ? "Live in demo" : c.status;
+}
+
+export function liveCount(): number {
+  return CAPABILITIES.filter((c) => effectiveStatus(c) === "Live in demo").length;
+}
+
+// Default twin object a screen opens against when launched from the Atlas.
+export const SCREEN_DEFAULT_ID: Record<ScreenKind, string | undefined> = {
+  plant: "PL-COV",
+  dock: "DC-JOL",
+  plan: undefined,
+};
 
 export interface ArchLayer {
   id: string;

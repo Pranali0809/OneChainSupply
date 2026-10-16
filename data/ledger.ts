@@ -101,4 +101,32 @@ export const LEDGER_STATS = {
   ),
 };
 
+// ── Runtime (session) ledger — commits made inside deep-dive screens ─────────
+// Deterministic ids: DEC-09001, DEC-09002, … in commit order.
+let sessionCounter = 9000;
+const sessionIds = new Set<string>();
+
+export function appendLedger(partial: Omit<LedgerEntry, "id" | "twinVersion"> & { id?: string }): LedgerEntry {
+  sessionCounter += 1;
+  const id = partial.id ?? `DEC-${String(sessionCounter).padStart(5, "0")}`;
+  const entry: LedgerEntry = { ...partial, id } as LedgerEntry;
+  LEDGER.push(entry);
+  (LEDGER_BY_OBJECT[entry.objectId] ||= []).push(entry);
+  sessionIds.add(id);
+  return entry;
+}
+
+// Remove every session commit, restoring the baseline ledger exactly.
+export function resetSessionLedger(): void {
+  if (!sessionIds.size) return;
+  for (let i = LEDGER.length - 1; i >= 0; i--) {
+    if (sessionIds.has(LEDGER[i].id)) LEDGER.splice(i, 1);
+  }
+  for (const key of Object.keys(LEDGER_BY_OBJECT)) {
+    LEDGER_BY_OBJECT[key] = LEDGER_BY_OBJECT[key].filter((e) => !sessionIds.has(e.id));
+  }
+  sessionIds.clear();
+  sessionCounter = 9000;
+}
+
 void round;

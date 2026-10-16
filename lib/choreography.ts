@@ -29,10 +29,20 @@ export interface Beat {
   close?: boolean; // Beat 8 close overlay
 }
 
+// Framed on continental US with Canada and Mexico visible for context.
 export const US_OVERVIEW: CameraState = {
-  longitude: -96,
-  latitude: 38.5,
-  zoom: 3.55,
+  longitude: -98,
+  latitude: 38,
+  zoom: 3.0,
+  pitch: 0,
+  bearing: 0,
+};
+
+// Beat 8 pulls back to the whole of North America.
+export const NA_OVERVIEW: CameraState = {
+  longitude: -100,
+  latitude: 34,
+  zoom: 2.6,
   pitch: 0,
   bearing: 0,
 };
@@ -131,7 +141,7 @@ export const BEATS: Beat[] = [
     title: "The close",
     timecode: "6:50",
     caption: "One twin. Every decision. Proven.",
-    camera: { ...US_OVERVIEW, zoom: 3.4, pitch: 0 },
+    camera: NA_OVERVIEW,
     layers: ["flows"],
     mode: "geo",
     close: true,

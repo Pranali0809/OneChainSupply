@@ -7,6 +7,7 @@ export type Temp = "DRY" | "TEMP";
 export type Ownership = "OWNED" | "3PL" | "CUSTOMER" | "SUPPLIER";
 export type LaneMode = "TRUCKLOAD" | "INTERMODAL" | "RAIL" | "LTL";
 export type BusinessUnit = "PET" | "CEREAL" | "SNACKS";
+export type Country = "US" | "CA" | "MX";
 
 export type RiskKind =
   | "age"
@@ -41,6 +42,7 @@ export interface TwinNode {
   name: string;
   city: string;
   state: string;
+  country: Country;
   kind: NodeKind;
   ownership: Ownership;
   temp: Temp;
@@ -72,6 +74,7 @@ export interface Lane {
   volume: number; // cases/week, drives arc height
   utilization: number; // 0..1, drives color
   risk: number; // lane risk 0..1
+  crossBorder?: boolean; // customs-delay driver applies
   severed?: boolean;
   stressed?: boolean;
   twinVersion: string;

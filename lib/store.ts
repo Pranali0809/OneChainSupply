@@ -3,12 +3,32 @@ import { CameraState, CanvasMode, BEATS, US_OVERVIEW, Beat } from "./choreograph
 import { LayerId } from "./layers";
 import { runSolve, SolveStage } from "./solve";
 import { runQuery, NlqResult } from "./nlq";
-import { KpiSet } from "./types";
+import { KpiSet, LedgerEntry } from "./types";
 import { BASELINE_KPI } from "./constants";
 import { SCENARIO_BY_ID } from "@/data/scenarios";
 import { SOLVE_BY_SCENARIO } from "@/data/solves";
 import { NODE_BY_ID } from "@/data/network";
 import { HERO_BATCH_ID } from "@/data/inventory";
+import { appendLedger, resetSessionLedger } from "@/data/ledger";
+import { ScreenKind } from "@/data/atlas";
+
+export interface ScreenState {
+  kind: ScreenKind;
+  id?: string;
+  sub?: string;
+}
+
+export interface CommitInput {
+  objectId: string;
+  objectLabel: string;
+  title: string;
+  expectedValue: number;
+  status?: "recommended" | "approved" | "overridden" | "executed";
+  actor?: string;
+  rationale?: string;
+  kpi?: Partial<Record<keyof KpiSet, number>>; // signed deltas applied to the strip
+  nodeRiskDelta?: { nodeId: string; delta: number };
+}
 
 export type RiskTierFilter = "low" | "med" | "high" | "crit" | null;
 
@@ -86,6 +106,20 @@ interface StoreState {
   nextBeat: () => void;
   prevBeat: () => void;
   applyBeat: (b: Beat) => void;
+
+  // deep-dive screens
+  activeScreen: ScreenState | null;
+  openScreen: (kind: ScreenKind, id?: string, sub?: string) => void;
+  closeScreen: () => void;
+
+  // commit pipeline + session state
+  sessionLedger: LedgerEntry[];
+  kpiDelta: Partial<Record<keyof KpiSet, number>>;
+  nodeRiskDelta: Record<string, number>;
+  twinRevision: number;
+  _nodeRestore?: Record<string, { composite: number; line?: number }>;
+  commitDecision: (input: CommitInput) => LedgerEntry;
+  resetAll: () => void;
 
   // derived
   currentKpi: () => KpiSet;
@@ -265,15 +299,129 @@ export const useStore = create<StoreState>((set, get) => ({
     }
   },
 
+  // ── deep-dive screens ──────────────────────────────────────────────────
+  activeScreen: null,
+  openScreen: (kind, id, sub) => {
+    set({ activeScreen: { kind, id, sub } });
+    // fly the camera into the object the screen scales out of
+    if ((kind === "plant" || kind === "dock") && id) {
+      const n = NODE_BY_ID[id];
+      if (n) get().flyTo({ longitude: n.lon, latitude: n.lat, zoom: 6.6, pitch: 45, bearing: 0 });
+    }
+  },
+  closeScreen: () => set({ activeScreen: null }),
+
+  // ── commit pipeline ────────────────────────────────────────────────────
+  sessionLedger: [],
+  kpiDelta: {},
+  nodeRiskDelta: {},
+  twinRevision: 0,
+  _nodeRestore: {},
+  commitDecision: (input) => {
+    const status = input.status ?? "executed";
+    const entry = appendLedger({
+      objectId: input.objectId,
+      objectLabel: input.objectLabel,
+      title: input.title,
+      status,
+      expectedValue: input.expectedValue,
+      realizedValue: status === "executed" ? Math.round(input.expectedValue * 0.96) : null,
+      actor: input.actor ?? "ONECHAIN · screen",
+      week: get().clockWeek,
+      rationale: input.rationale ?? "Committed from a deep-dive screen.",
+    });
+    set((s) => {
+      const kpiDelta = { ...s.kpiDelta };
+      if (input.kpi) {
+        for (const k of Object.keys(input.kpi) as (keyof KpiSet)[]) {
+          kpiDelta[k] = (kpiDelta[k] ?? 0) + (input.kpi[k] ?? 0);
+        }
+      }
+      const nodeRiskDelta = { ...s.nodeRiskDelta };
+      const nodeRestore = { ...s._nodeRestore };
+      if (input.nodeRiskDelta) {
+        const { nodeId, delta } = input.nodeRiskDelta;
+        nodeRiskDelta[nodeId] = (nodeRiskDelta[nodeId] ?? 0) + delta;
+        const node = NODE_BY_ID[nodeId];
+        if (node) {
+          const lineRisk = node.risks.find((r) => r.kind === "line");
+          // snapshot originals once so reset restores the baseline exactly
+          if (!nodeRestore[nodeId]) {
+            nodeRestore[nodeId] = { composite: node.composite, line: lineRisk?.value };
+          }
+          node.composite = Math.max(0, Math.min(1, node.composite + delta));
+          if (lineRisk) lineRisk.value = Math.max(0, Math.min(1, lineRisk.value + delta));
+        }
+      }
+      return {
+        _nodeRestore: nodeRestore,
+        sessionLedger: [entry, ...s.sessionLedger],
+        kpiDelta,
+        nodeRiskDelta,
+        twinRevision: s.twinRevision + 1,
+      };
+    });
+    return entry;
+  },
+  resetAll: () => {
+    get()._cancelSolve?.();
+    resetSessionLedger();
+    // restore any node risk values mutated by commits
+    const restore = get()._nodeRestore ?? {};
+    for (const id of Object.keys(restore)) {
+      const node = NODE_BY_ID[id];
+      if (!node) continue;
+      node.composite = restore[id].composite;
+      const lineRisk = node.risks.find((r) => r.kind === "line");
+      if (lineRisk && restore[id].line != null) lineRisk.value = restore[id].line!;
+    }
+    set({
+      sessionLedger: [],
+      kpiDelta: {},
+      nodeRiskDelta: {},
+      _nodeRestore: {},
+      twinRevision: get().twinRevision + 1,
+      activeScreen: null,
+      activeScenarioId: null,
+      solveStage: "idle",
+      _cancelSolve: undefined,
+      selectedNodeId: null,
+      selectedLaneId: null,
+      selectedBatchId: null,
+      isolatedTier: null,
+      activeLayers: ["flows"],
+      mode: "geo",
+      clockWeek: 25,
+      nlqOpen: false,
+      nlqResult: null,
+      loopOpen: false,
+      commandBarOpen: false,
+      scenarioRailOpen: false,
+      ghostPanels: false,
+      unifiedCard: false,
+      closeOverlay: false,
+      presenterMode: false,
+    });
+    get().flyTo({ ...US_OVERVIEW });
+  },
+
   currentKpi: () => {
     const s = get();
+    let base: KpiSet;
     if (s.activeScenarioId && s.solveStage === "done") {
-      return SOLVE_BY_SCENARIO[s.activeScenarioId]?.kpi ?? BASELINE_KPI;
+      base = SOLVE_BY_SCENARIO[s.activeScenarioId]?.kpi ?? BASELINE_KPI;
+    } else if (s.activeScenarioId) {
+      base = SCENARIO_BY_ID[s.activeScenarioId]?.kpiAfter ?? BASELINE_KPI;
+    } else {
+      base = BASELINE_KPI;
     }
-    if (s.activeScenarioId) {
-      return SCENARIO_BY_ID[s.activeScenarioId]?.kpiAfter ?? BASELINE_KPI;
+    const d = s.kpiDelta;
+    if (!d || Object.keys(d).length === 0) return base;
+    const out = { ...base };
+    for (const k of Object.keys(d) as (keyof KpiSet)[]) {
+      out[k] = (out[k] as number) + (d[k] ?? 0);
     }
-    return BASELINE_KPI;
+    return out;
   },
 }));
 

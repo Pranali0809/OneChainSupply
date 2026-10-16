@@ -5,6 +5,7 @@ import { CountUp } from "@/components/primitives";
 import { TWIN_VERSION } from "@/lib/types";
 import { SCENARIO_BY_ID } from "@/data/scenarios";
 import { WEEK_LABELS } from "@/data/forecast";
+import { NODE_BY_ID } from "@/data/network";
 
 function Kpi({ label, value, decimals = 0, prefix = "", suffix = "", tone }: { label: string; value: number; decimals?: number; prefix?: string; suffix?: string; tone?: string }) {
   return (
@@ -24,7 +25,15 @@ export default function TopBar() {
   const enterPresenter = useStore((s) => s.enterPresenter);
   const exitPresenter = useStore((s) => s.exitPresenter);
   const clockWeek = useStore((s) => s.clockWeek);
+  const screen = useStore((s) => s.activeScreen);
+  const closeScreen = useStore((s) => s.closeScreen);
   const scn = activeScenarioId ? SCENARIO_BY_ID[activeScenarioId] : null;
+
+  const screenLabel = screen
+    ? screen.kind === "plan"
+      ? "Plan room"
+      : NODE_BY_ID[screen.id ?? ""]?.code ?? screen.id ?? ""
+    : null;
 
   const fillTone = kpi.fillRate < 94 ? "var(--risk-high)" : kpi.fillRate < 96 ? "var(--risk-med)" : "var(--risk-low)";
 
@@ -43,12 +52,26 @@ export default function TopBar() {
         <span className="label !text-text-low">· {WEEK_LABELS[clockWeek]}</span>
       </div>
 
-      <div className="pl-3 border-l border-stroke-faint">
-        <div className="label !text-text-low">Scenario</div>
-        <div className="text-[12px] font-medium" style={{ color: scn ? "var(--risk-high)" : "var(--text-mid)" }}>
-          {scn ? scn.name : "Baseline · steady state"}
+      {screen ? (
+        <div className="pl-3 border-l border-stroke-faint flex items-center gap-1.5 text-[12px]">
+          <button onClick={closeScreen} className="text-text-mid hover:text-accent transition-colors">Network</button>
+          <span className="text-text-low">›</span>
+          <span className="text-text-hi font-medium">{screenLabel}</span>
+          {screen.sub && (
+            <>
+              <span className="text-text-low">›</span>
+              <span className="text-accent font-medium">{screen.sub}</span>
+            </>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="pl-3 border-l border-stroke-faint">
+          <div className="label !text-text-low">Scenario</div>
+          <div className="text-[12px] font-medium" style={{ color: scn ? "var(--risk-high)" : "var(--text-mid)" }}>
+            {scn ? scn.name : "Baseline · steady state"}
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex items-center justify-end">
         <div className="flex items-center">

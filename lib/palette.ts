@@ -33,6 +33,18 @@ export function riskRampHex(v: number): string {
   return `rgb(${r},${g},${b})`;
 }
 
+// Sequential blue ramp for non-risk metrics (cost, forecast uncertainty) so red
+// never reads as danger where none exists.
+const BLUE_LO: RGB = [26, 54, 93];
+const BLUE_HI: RGB = [120, 190, 255];
+export function blueRamp(v: number): RGB {
+  return lerp(BLUE_LO, BLUE_HI, Math.max(0, Math.min(1, v)));
+}
+export function blueRampHex(v: number): string {
+  const [r, g, b] = blueRamp(v);
+  return `rgb(${r},${g},${b})`;
+}
+
 export function riskTier(v: number): "low" | "med" | "high" | "crit" {
   if (v < 0.4) return "low";
   if (v < 0.7) return "med";

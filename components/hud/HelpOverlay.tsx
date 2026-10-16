@@ -30,6 +30,15 @@ const GROUPS: { title: string; keys: [string, string][] }[] = [
     ],
   },
   {
+    title: "Deep-dive screens",
+    keys: [
+      ["Inspector", "Open plant · Build truck · Plan room"],
+      ["Atlas", "Open screen (from a capability card)"],
+      ["Esc", "Exit screen (reverse transition)"],
+      ["R", "Reset everything to baseline"],
+    ],
+  },
+  {
     title: "Presenter",
     keys: [
       ["P", "Enter / exit presenter mode"],

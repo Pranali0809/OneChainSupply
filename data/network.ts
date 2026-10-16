@@ -8,6 +8,7 @@ import {
   BusinessUnit,
   RiskScore,
   LaneMode,
+  Country,
   TWIN_VERSION,
 } from "@/lib/types";
 
@@ -19,6 +20,7 @@ interface Anchor {
   name: string;
   city: string;
   state: string;
+  country?: Country;
   lon: number;
   lat: number;
   ownership?: Ownership;
@@ -30,7 +32,7 @@ interface Anchor {
 
 // ── Plants (9) ──────────────────────────────────────────────────────────────
 const PLANTS: Anchor[] = [
-  { code: "PL-COV", name: "Covington", city: "Covington", state: "GA", lon: -83.86, lat: 33.6, lines: ["COV-L1", "COV-L2", "COV-L3", "COV-L4"], bu: ["PET", "SNACKS"] },
+  { code: "PL-COV", name: "Covington", city: "Covington", state: "GA", lon: -83.86, lat: 33.6, lines: ["COV-L1", "COV-L2", "COV-L3"], bu: ["PET", "SNACKS"] },
   { code: "PL-LBK", name: "Lubbock", city: "Lubbock", state: "TX", lon: -101.86, lat: 33.58, lines: ["LBK-L1", "LBK-L2", "LBK-L3"], bu: ["PET"] },
   { code: "PL-FAR", name: "Fargo", city: "Fargo", state: "ND", lon: -96.79, lat: 46.88, lines: ["FAR-L1", "FAR-L2"], bu: ["CEREAL"] },
   { code: "PL-MOD", name: "Modesto", city: "Modesto", state: "CA", lon: -120.99, lat: 37.64, lines: ["MOD-L1", "MOD-L2", "MOD-L3", "MOD-L4", "MOD-L5"], bu: ["CEREAL", "SNACKS"] },
@@ -80,7 +82,7 @@ const CUSTOMER_DCS: Anchor[] = [
   { code: "CDC-GAG-APP", name: "Gageton Apple Valley", city: "Apple Valley", state: "MN", lon: -93.22, lat: 44.73, customerCode: "CUST-GAG" },
   { code: "CDC-GAG-FRD", name: "Gageton Frederick", city: "Frederick", state: "MD", lon: -77.41, lat: 39.41, customerCode: "CUST-GAG" },
   { code: "CDC-RRR-SHR", name: "Red River Shreveport", city: "Shreveport", state: "LA", lon: -93.75, lat: 32.52, customerCode: "CUST-RRR" },
-  { code: "CDC-RRR-SAN", name: "Red River San Antonio", city: "San Antonio", state: "TX", lon: -98.49, lat: 29.42, customerCode: "CUST-RRR" },
+  { code: "CDC-RRR-SAN", name: "Red River Monterrey", city: "Monterrey", state: "NL", country: "MX", lon: -100.32, lat: 25.67, customerCode: "CUST-RRR" },
   { code: "CDC-RRR-TUL", name: "Red River Tulsa", city: "Tulsa", state: "OK", lon: -95.99, lat: 36.15, customerCode: "CUST-RRR" },
   { code: "CDC-BYR-LAK", name: "Byrne Lakeland", city: "Lakeland", state: "FL", lon: -81.95, lat: 28.04, customerCode: "CUST-BYR" },
   { code: "CDC-BYR-POO", name: "Byrne Pooler", city: "Pooler", state: "GA", lon: -81.25, lat: 32.12, customerCode: "CUST-BYR" },
@@ -100,13 +102,13 @@ const SUPPLIERS: Anchor[] = [
   { code: "SUP-PRO", name: "ProMeal Proteins", city: "Sioux City", state: "IA", lon: -96.4, lat: 42.5 },
   { code: "SUP-CRN", name: "Cornbelt Starch", city: "Decatur", state: "IL", lon: -88.95, lat: 39.84 },
   { code: "SUP-OIL", name: "Western Oils", city: "Fresno", state: "CA", lon: -119.77, lat: 36.75 },
-  { code: "SUP-PKG", name: "Apex Packaging", city: "Green Bay", state: "WI", lon: -88.02, lat: 44.51 },
+  { code: "SUP-PKG", name: "Apex Packaging", city: "Toronto", state: "ON", country: "CA", lon: -79.38, lat: 43.7 },
   { code: "SUP-FLM", name: "ClearFilm Flex", city: "Charlotte", state: "NC", lon: -80.84, lat: 35.23 },
   { code: "SUP-CTN", name: "Carton Craft", city: "Memphis", state: "TN", lon: -90.0, lat: 35.1 },
   { code: "SUP-VIT", name: "VitaBlend Nutrients", city: "Newark", state: "NJ", lon: -74.17, lat: 40.73 },
   { code: "SUP-SUG", name: "Southland Sugar", city: "Baton Rouge", state: "LA", lon: -91.19, lat: 30.45 },
   { code: "SUP-FLV", name: "Keystone Flavors", city: "Cincinnati", state: "OH", lon: -84.51, lat: 39.1 },
-  { code: "SUP-PAL", name: "Pallet Standard Co", city: "Portland", state: "OR", lon: -122.68, lat: 45.52 },
+  { code: "SUP-PAL", name: "Pallet Standard Co", city: "Vancouver", state: "BC", country: "CA", lon: -123.12, lat: 49.25 },
   { code: "SUP-LAB", name: "Label Dynamics", city: "Dallas", state: "TX", lon: -96.8, lat: 32.78 },
 ];
 
@@ -268,6 +270,7 @@ function buildNode(a: Anchor, kind: NodeKind): TwinNode {
     name: a.name,
     city: a.city,
     state: a.state,
+    country: a.country ?? "US",
     kind,
     ownership,
     temp,
@@ -335,14 +338,17 @@ function addLane(from: TwinNode, to: TwinNode) {
   if (laneSet.has(key)) return;
   const miles = dist(from, to);
   const mode = pickMode(miles);
+  const crossBorder = from.country !== to.country;
   const transitDays = Math.max(
     1,
-    Math.round(miles / (mode === "RAIL" ? 450 : mode === "INTERMODAL" ? 520 : 620))
+    Math.round(miles / (mode === "RAIL" ? 450 : mode === "INTERMODAL" ? 520 : 620)) +
+      (crossBorder ? 2 : 0) // customs dwell
   );
   const reliability = round(
     clamp(
       0.97 -
         (mode === "RAIL" ? 0.08 : mode === "INTERMODAL" ? 0.05 : 0.02) -
+        (crossBorder ? 0.06 : 0) -
         rng.range(0, 0.06)
     ),
     2
@@ -352,10 +358,16 @@ function addLane(from: TwinNode, to: TwinNode) {
   );
   const utilization = round(clamp(rng.range(0.45, 0.98)), 2);
   const risk = round(
-    clamp((1 - reliability) * 2 + (utilization > 0.9 ? 0.2 : 0) + rng.gauss(0, 0.05)),
+    clamp(
+      (1 - reliability) * 2 +
+        (utilization > 0.9 ? 0.2 : 0) +
+        (crossBorder ? 0.12 : 0) +
+        rng.gauss(0, 0.05)
+    ),
     2
   );
   laneSet.set(key, {
+    crossBorder,
     id: `LN-${from.code.replace(/^[A-Z]+-/, "")}-${to.code.replace(/^[A-Z]+-/, "")}-${mode.slice(0, 2)}`,
     from: from.id,
     to: to.id,
