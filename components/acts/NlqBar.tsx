@@ -50,6 +50,7 @@ export default function NlqBar() {
         <span className="text-accent text-[16px] pl-2">⌕</span>
         <input
           ref={inputRef}
+          data-demo="nlq-input"
           value={typed || input}
           onChange={(e) => {
             setInput(e.target.value);

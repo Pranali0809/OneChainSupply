@@ -24,6 +24,7 @@ export default function SolveOverlay() {
       <AnimatePresence>
         {showRun && (
           <motion.button
+            data-demo="run-solve"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}

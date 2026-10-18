@@ -29,6 +29,7 @@ export default function LayerRail() {
             return (
               <button
                 key={l.id}
+                data-demo={`layer-${l.id}`}
                 onClick={() => toggle(l.id)}
                 className="group relative w-9 h-9 rounded-[9px] grid place-items-center transition-all"
                 style={{

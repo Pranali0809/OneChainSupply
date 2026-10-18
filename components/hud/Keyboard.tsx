@@ -38,8 +38,13 @@ export default function Keyboard() {
             s.prevBeat();
           }
           break;
+        case "a":
+        case "A":
+          s.autoDemo ? s.stopAutoDemo() : s.startAutoDemo();
+          break;
         case "Escape":
-          if (s.commandBarOpen) s.setCommandBar(false);
+          if (s.autoDemo) s.stopAutoDemo();
+          else if (s.commandBarOpen) s.setCommandBar(false);
           else if (s.helpOpen) s.setHelp(false);
           else if (s.activeScreen) s.closeScreen();
           else if (s.nlqOpen) s.setNlq(false);

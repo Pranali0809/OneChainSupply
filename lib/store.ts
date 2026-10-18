@@ -123,6 +123,13 @@ interface StoreState {
   commitDecision: (input: CommitInput) => LedgerEntry;
   resetAll: () => void;
 
+  // auto-demo (drives the real controls like a user clicking)
+  autoDemo: boolean;
+  autoPaused: boolean;
+  startAutoDemo: () => void;
+  stopAutoDemo: () => void;
+  setAutoPaused: (b: boolean) => void;
+
   // derived
   currentKpi: () => KpiSet;
 }
@@ -412,6 +419,17 @@ export const useStore = create<StoreState>((set, get) => ({
     });
     get().flyTo({ ...US_OVERVIEW });
   },
+
+  // ── auto-demo ──────────────────────────────────────────────────────────
+  autoDemo: false,
+  autoPaused: false,
+  startAutoDemo: () => {
+    get().resetAll();
+    set({ autoDemo: true, autoPaused: false });
+  },
+  stopAutoDemo: () =>
+    set({ autoDemo: false, autoPaused: false, scenarioRailOpen: false, nlqOpen: false, loopOpen: false }),
+  setAutoPaused: (b) => set({ autoPaused: b }),
 
   currentKpi: () => {
     const s = get();

@@ -17,6 +17,7 @@ import GhostPanels from "./acts/GhostPanels";
 import CloseOverlay from "./acts/CloseOverlay";
 import PresenterControls from "./acts/PresenterControls";
 import ScreenHost from "./screens/ScreenHost";
+import Autopilot from "./demo/Autopilot";
 
 const TwinCanvas = dynamic(() => import("./twin/TwinCanvas"), {
   ssr: false,
@@ -54,6 +55,7 @@ export default function Shell() {
       <PresenterControls />
       <CommandBar />
       <HelpOverlay />
+      <Autopilot />
       <Keyboard />
     </main>
   );

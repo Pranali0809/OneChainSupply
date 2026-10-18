@@ -39,12 +39,12 @@ const GROUPS: { title: string; keys: [string, string][] }[] = [
     ],
   },
   {
-    title: "Presenter",
+    title: "Demo",
     keys: [
-      ["P", "Enter / exit presenter mode"],
-      ["→ / ←", "Advance / reverse beats"],
-      ["Esc", "Exit / close the top overlay"],
-      ["?", "This shortcut sheet"],
+      ["A", "Auto demo — drives the real controls"],
+      ["Space", "Pause / resume the auto demo"],
+      ["P", "Presenter mode (caption beats)"],
+      ["→ / ← · Esc", "Step · exit"],
     ],
   },
 ];

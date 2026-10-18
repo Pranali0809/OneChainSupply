@@ -14,6 +14,7 @@ export default function ScenarioRail() {
   return (
     <>
       <button
+        data-demo="inject-toggle"
         onClick={() => setOpen(!open)}
         className="absolute right-4 top-[72px] z-20 glass px-3 py-2 text-[12px] flex items-center gap-2 hover:text-accent transition-colors"
         style={{ color: open ? "var(--accent)" : "var(--text-mid)" }}
@@ -42,6 +43,7 @@ export default function ScenarioRail() {
                 return (
                   <button
                     key={s.id}
+                    data-demo={`scenario-${s.id}`}
                     onClick={() => fire(s.id)}
                     className="text-left rounded-lg border p-2.5 transition-all"
                     style={{

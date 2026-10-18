@@ -24,6 +24,9 @@ export default function TopBar() {
   const presenterMode = useStore((s) => s.presenterMode);
   const enterPresenter = useStore((s) => s.enterPresenter);
   const exitPresenter = useStore((s) => s.exitPresenter);
+  const autoDemo = useStore((s) => s.autoDemo);
+  const startAutoDemo = useStore((s) => s.startAutoDemo);
+  const stopAutoDemo = useStore((s) => s.stopAutoDemo);
   const clockWeek = useStore((s) => s.clockWeek);
   const screen = useStore((s) => s.activeScreen);
   const closeScreen = useStore((s) => s.closeScreen);
@@ -87,6 +90,18 @@ export default function TopBar() {
         <Link href="/atlas" className="text-[12px] text-text-mid hover:text-accent transition-colors px-2 py-1 rounded-md hover:bg-white/5">
           Capability Atlas ↗
         </Link>
+        <button
+          data-auto-ui
+          onClick={() => (autoDemo ? stopAutoDemo() : startAutoDemo())}
+          className="text-[12px] px-2.5 py-1 rounded-md border transition-colors"
+          style={{
+            borderColor: autoDemo ? "var(--accent)" : "var(--stroke)",
+            color: autoDemo ? "var(--accent)" : "var(--text-mid)",
+            background: autoDemo ? "rgba(77,225,193,0.08)" : "transparent",
+          }}
+        >
+          {autoDemo ? "▶ Auto demo" : "Auto demo (A)"}
+        </button>
         <button
           onClick={() => (presenterMode ? exitPresenter() : enterPresenter())}
           className="text-[12px] px-2.5 py-1 rounded-md border transition-colors"
