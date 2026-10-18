@@ -104,11 +104,15 @@ export default function TwinCanvas() {
   }, [scenario]);
   const severed = useMemo(() => new Set(scenario?.severedLanes ?? []), [scenario]);
   const stressed = useMemo(() => new Set(scenario?.stressedLanes ?? []), [scenario]);
+  const committedFlows = useStore((s) => s.committedFlows);
   const solved = activeScenarioId && (solveStage === "reveal" || solveStage === "done");
   const newFlows = useMemo(() => {
-    if (!solved || !activeScenarioId) return new Set<string>();
-    return new Set(SOLVE_BY_SCENARIO[activeScenarioId]?.flows.filter((f) => f.isNew).map((f) => f.laneId) ?? []);
-  }, [solved, activeScenarioId]);
+    const set = new Set<string>(committedFlows);
+    if (solved && activeScenarioId) {
+      SOLVE_BY_SCENARIO[activeScenarioId]?.flows.filter((f) => f.isNew).forEach((f) => set.add(f.laneId));
+    }
+    return set;
+  }, [solved, activeScenarioId, committedFlows]);
 
   const primary = activeLayers[0] ?? "flows";
   const secondary = activeLayers[1];

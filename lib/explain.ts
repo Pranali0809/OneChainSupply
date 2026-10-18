@@ -23,7 +23,7 @@ export function explainReposition(): ExplanationCard {
       { name: "Customer freshness ≥ 60d", slack: "crossed by day 7 of transit — binds", binding: true },
       { name: "Reed City receiving capacity", slack: "2,400 cs/wk open — 560 cs slack", binding: false },
       { name: "Min remaining ship ≥ 110d", slack: "not binding for repositioning leg", binding: false },
-      { name: "Truckload minimum", slack: "1,840 cs fills 38 pallets — binds to 1 TL", binding: true },
+      { name: "Truckload minimum", slack: "1,840 cs = 38 full + 1 partial pallet · 44,160 lb = 92% of trailer limit — binds to 1 TL (weight)", binding: true },
     ],
     nextBest: {
       label: "Donate at Joliet (tax-credit recovery)",

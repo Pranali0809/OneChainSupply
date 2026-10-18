@@ -391,6 +391,11 @@ dcs.forEach((d) => nearest(d, dcs, 3).forEach((d2) => addLane(d, d2)));
 // DC -> Customer DC (outbound)
 custDcs.forEach((c) => nearest(c, dcs, rng.int(3, 4)).forEach((d) => addLane(d, c)));
 
+// Guarantee the hero repositioning lane Joliet → Reed City (Beat 5/6 story).
+if (NODE_BY_ID["DC-JOL"] && NODE_BY_ID["DC-RED"]) {
+  addLane(NODE_BY_ID["DC-JOL"], NODE_BY_ID["DC-RED"]);
+}
+
 export const LANES: Lane[] = Array.from(laneSet.values());
 
 export const LANE_BY_ID: Record<string, Lane> = Object.fromEntries(

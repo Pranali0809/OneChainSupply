@@ -87,7 +87,7 @@ const SOLVE_KPI: Record<string, KpiSet> = {
 const TRADEOFFS: Record<string, string[]> = {
   "SCN-CARRIER": [
     "+340 intermodal moves swapped to truck to protect 48h service window",
-    "1,840 cs repositioned Joliet → Reed City instead of donated (recovers $169k value)",
+    "1,840 cs repositioned Joliet → Reed City instead of donated (recovers $169k value · $4.2k TL freight on the leg)",
     "Raw-material order for PL-OMA deferred one cycle to free working capital",
   ],
   "SCN-COLDCHAIN": [

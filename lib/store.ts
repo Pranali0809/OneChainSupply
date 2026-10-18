@@ -28,6 +28,7 @@ export interface CommitInput {
   rationale?: string;
   kpi?: Partial<Record<keyof KpiSet, number>>; // signed deltas applied to the strip
   nodeRiskDelta?: { nodeId: string; delta: number };
+  laneFlow?: string; // lane id to light up as a committed flow on the twin
 }
 
 export type RiskTierFilter = "low" | "med" | "high" | "crit" | null;
@@ -116,6 +117,7 @@ interface StoreState {
   sessionLedger: LedgerEntry[];
   kpiDelta: Partial<Record<keyof KpiSet, number>>;
   nodeRiskDelta: Record<string, number>;
+  committedFlows: string[];
   twinRevision: number;
   _nodeRestore?: Record<string, { composite: number; line?: number }>;
   commitDecision: (input: CommitInput) => LedgerEntry;
@@ -315,6 +317,7 @@ export const useStore = create<StoreState>((set, get) => ({
   sessionLedger: [],
   kpiDelta: {},
   nodeRiskDelta: {},
+  committedFlows: [],
   twinRevision: 0,
   _nodeRestore: {},
   commitDecision: (input) => {
@@ -353,11 +356,15 @@ export const useStore = create<StoreState>((set, get) => ({
           if (lineRisk) lineRisk.value = Math.max(0, Math.min(1, lineRisk.value + delta));
         }
       }
+      const committedFlows = input.laneFlow && !s.committedFlows.includes(input.laneFlow)
+        ? [...s.committedFlows, input.laneFlow]
+        : s.committedFlows;
       return {
         _nodeRestore: nodeRestore,
         sessionLedger: [entry, ...s.sessionLedger],
         kpiDelta,
         nodeRiskDelta,
+        committedFlows,
         twinRevision: s.twinRevision + 1,
       };
     });
@@ -379,6 +386,7 @@ export const useStore = create<StoreState>((set, get) => ({
       sessionLedger: [],
       kpiDelta: {},
       nodeRiskDelta: {},
+      committedFlows: [],
       _nodeRestore: {},
       twinRevision: get().twinRevision + 1,
       activeScreen: null,
